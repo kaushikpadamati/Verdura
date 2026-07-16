@@ -370,7 +370,7 @@ export default function App() {
               <button className="btn-o" onClick={()=>nav("care")}>Care Guides</button>
             </div>
           </div>
-          <div className="hero-vis"><div className="hero-circle"><img src="/images/hero-plant.png" alt="Featured Plant" style={{width:"100%", height:"100%", objectFit:"contain"}} /></div></div>
+          <div className="hero-vis"><div className="hero-circle"><img src="./images/hero-plant.png" alt="Featured Plant" style={{width:"100%", height:"100%", objectFit:"contain"}} /></div></div>
         </div>
 
         <div className="stats">

@@ -1,6 +1,8 @@
-# React + Vite
+# Verdura — Premium Plant Store
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Live site:** [kaushikpadamati.github.io/Verdura](https://kaushikpadamati.github.io/Verdura/)
+
+A React + Vite e-commerce app for a plant boutique in Chennai, India.
 
 Currently, two official plugins are available:
 

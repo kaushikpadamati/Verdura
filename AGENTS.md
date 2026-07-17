@@ -2,51 +2,70 @@
 
 ## Project
 
-Single-package React + Vite plant store ("Verdura"). No TypeScript, no monorepo.
+React + Vite plant store ("Verdura") with Express + SQLite backend. No TypeScript, no monorepo.
 
 ## Commands
 
+### Frontend (root)
 ```bash
-npm run dev       # Vite dev server (also aliased as npm run start)
+npm run dev       # Vite dev server
 npm run build     # Production build → dist/
 npm run lint      # ESLint (flat config, React hooks + refresh plugins)
 npm run preview   # Preview production build locally
+```
+
+### Backend (server/)
+```bash
+cd server && npm install   # Install dependencies (first time only)
+node index.js              # Starts API on http://localhost:3001
+node --watch index.js      # Dev mode with auto-reload
 ```
 
 No test script exists. No typecheck. No CI.
 
 ## Architecture
 
-**App.jsx is a 917-line monolith** containing all state, logic, and JSX for every view (home, shop, care, about, cart, modals). This is the single most important structural fact.
+**Frontend**: `src/App.jsx` (~1018 lines) — all views, state, and logic in one file.
 
+- `src/api.js` — Axios client with JWT interceptor. Base URL from `VITE_API_URL` env var (defaults to `http://localhost:3001`).
 - `src/styles.js` — all CSS as a ~463-line JS template literal, injected via `<style>{CSS}</style>` in App.jsx
-- `src/constants.js` — design tokens, care guides, reviews, categories, country configs
-- `src/utils.js` — `fmt()` (INR formatter) and `stars()` (rating display)
-- `src/services/plantsAPI.js` — mock async API over `src/data/plants.json` (300ms simulated delay)
-- `src/data/plants.json` — plant catalog (40+ items, fields: id, name, cat, price, rating, reviews, care, light, water, desc, badge, image)
-- `public/images/` — plant product PNGs, referenced as `/images/<name>.png`
+- `src/data/plants.json` — seed data (40 plants). Read by server on first run to populate DB.
+- `public/images/` — plant product PNGs, referenced as `./images/<name>.png` (relative paths for GitHub Pages).
 
-**Navigation is state-based** (`useState("home")`), not using react-router-dom despite it being a dependency.
+**Backend**: `server/` — Express + better-sqlite3 + JWT auth.
 
-**Dark mode** toggles a `.dark` class on `<html>`. All dark overrides live in `styles.js` as `.dark .selector` rules.
+```
+server/
+  index.js              — Express entry, serves API + built frontend
+  db/connection.js      — SQLite connection (verdura.db)
+  db/schema.js          — Table creation + seed from plants.json + admin user
+  middleware/auth.js     — JWT verification + admin role check
+  routes/auth.js         — POST /register, POST /login, GET /me
+  routes/products.js     — GET / (with ?category= and ?search= filters)
+  routes/reviews.js      — CRUD on /products/:id/reviews and /reviews/:id
+  routes/orders.js       — POST / (place order), GET / (user's orders)
+  routes/admin.js        — GET /orders, GET /users, PATCH /orders/:id, GET /stats
+```
 
-**Persistence** — all via `localStorage`: dark mode, user auth (username + avatar), plant reviews (keyed by plant ID), delivery address/phone/country.
+**Database tables**: users, products, orders, order_items, reviews, addresses.
 
-## Refactor Status
+**Auth**: JWT tokens stored in localStorage. Passwords hashed with bcrypt. Token sent as `Authorization: Bearer <token>`.
 
-`TODO.md` claims 8/18 refactor phases are done (extracted hooks, components, pages), but **those files do not exist**. The `src/hooks/`, `src/components/`, `src/pages/` directories are absent. TODO.md is stale/aspirational — everything is still in App.jsx.
+**Navigation**: State-based (`useState("home")`), not using react-router-dom.
 
-## Gotchas
+**Dark mode**: Toggles `.dark` class on `<html>`. Overrides in `styles.js`.
 
-- **Duplicated code**: `constants.js` and `utils.js` exist but App.jsx still redefines the same values inline (design tokens, `CARE_GUIDES`, `REVIEWS`, `CATS`, `COUNTRIES`, `fmt`, `stars`). Changes to the extracted files won't affect the running app.
-- **`react-router-dom`** is installed but unused — routing is page-state-based.
-- **ESLint `no-unused-vars`** ignores variables starting with uppercase or underscore (`varsIgnorePattern: '^[A-Z_]'`).
-- **INR currency** — all prices in ₹, locale `en-IN`. Delivery threshold: ₹999 for free shipping.
-- **`dist/`** directory exists in the repo tree (build artifact).
-- **Plant images** are static PNGs in `public/images/`, not imported — referenced by path from JSON data.
+## Key Data
+
+- **Admin account**: `admin@verdura.in` / `verdura2024` (seeded on first run)
+- **Delivery**: Free over ₹999, otherwise ₹99
+- **Currency**: INR (₹), locale `en-IN`
 
 ## When Editing
 
-- CSS changes go in `src/styles.js` (the exported `CSS` template literal), not separate `.css` files. `App.css` and `index.css` exist but are minimal/unused.
-- Adding new plant data: edit `src/data/plants.json` and ensure a matching image exists in `public/images/`.
-- All component logic lives in `src/App.jsx`. There are no other component files.
+- CSS → `src/styles.js` (the exported `CSS` template literal), not `.css` files.
+- Product data → `src/data/plants.json` + matching image in `public/images/`. Then restart server to re-seed (delete `server/verdura.db` first).
+- App logic → `src/App.jsx`. There are no other component files.
+- API routes → `server/routes/`.
+- DB schema → `server/db/schema.js`.
+- Frontend API calls → `src/api.js`.
